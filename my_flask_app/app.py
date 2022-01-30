@@ -8,9 +8,16 @@ app = Flask(__name__)
 def search_articles():
     try:
         content = request.json
-        serch_in = content['search']
+        f"where ar.article_name LIKE '%{content['search']}%'"
+        serch_in = f"where ar.article_name LIKE '%{content['search']}%'"
     except:
         serch_in = ''
+    try:
+        term_in = f"""AND (select string_agg(themes.theme_name, ', ') from article_themes
+        join themes ON themes.id = article_themes.theme_id
+        where article_themes.articles_id = ar.id) LIKE '%{content['term']}%'"""
+    except:
+        term_in = ''
     con = psycopg2.connect(
         database="cyberlininka",
         user="postgres",
@@ -26,7 +33,7 @@ def search_articles():
     from articles as ar
     JOIN links ON ar.link_id = links.id
     JOIN article_sourse ON ar.sourse_id = article_sourse.id
-    where ar.article_name LIKE '%{serch_in}%'
+    {serch_in} {term_in}
     ;"""
     cur = con.cursor()
     cur.execute(search)
